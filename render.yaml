@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: argumentcraft
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: OPENAI_API_KEY
+        value: sk-dlbhvgfpizrbfyfniixeumhpafrltkmzxxpwssrnygafonxr
+      - key: OPENAI_BASE_URL
+        value: https://api.siliconflow.cn/v1
+      - key: OPENAI_MODEL
+        value: Qwen/Qwen2.5-7B-Instruct

@@ -1,0 +1,1081 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ArgumentCraft — Toulmin × Socratic AI</title>
+  <meta name="description" content="A Toulmin-based argument practice tool that uses multi-turn Socratic AI questions to spark cognitive conflict and visualize reasoning.">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+  <style>
+:root{
+  --bg:#f6f0e7; --ink:#2a1a12; --ink-2:#5b4a3f; --brown:#3b2116; --pill:#ece3d7;
+  --line:rgba(42,26,18,.08); --glass:rgba(250,245,238,.62); --glass-b:rgba(255,255,255,.58);
+  --r:24px; --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:"Inter Tight",system-ui,sans-serif;font-weight:400;line-height:1.45;overflow:hidden;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button,input,textarea{font:inherit}
+:focus-visible{outline:2px solid #8a6a58;outline-offset:2px}
+
+/* Nav */
+.nav{min-height:64px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 18px;border-bottom:1px solid var(--line);background:rgba(246,240,231,.78);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand svg{width:30px;height:30px;flex:none}
+.brand h1{font-size:18px;font-weight:500;letter-spacing:-.03em;white-space:nowrap}
+.brand p{font-size:12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(44vw,520px)}
+.nav-r{display:flex;align-items:center;gap:8px;flex:none;flex-wrap:wrap;justify-content:flex-end;min-width:0}
+.pill,.btn-dark,.pill-select{max-width:100%}
+.pill{background:var(--pill);border:0;border-radius:999px;padding:9px 14px;font-size:12px;text-transform:uppercase;letter-spacing:.03em;cursor:pointer;transition:background .3s var(--ease),transform .22s var(--ease),box-shadow .22s var(--ease);white-space:normal;line-height:1.2}
+.pill:hover{background:#e3d6c6;transform:translateY(-1px);box-shadow:0 8px 18px -14px rgba(42,26,18,.35)}
+.pill:active{transform:translateY(0) scale(.98)}
+.pill[data-demo]{flex:1 1 auto;min-width:0;padding:5px 9px;font-size:10px;letter-spacing:.02em;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:3px}
+.pill[data-demo] .ico{width:11px;height:11px;margin-right:0;vertical-align:0}
+.pill[data-demo] .ico svg{width:11px;height:11px}
+.pill-select{background:var(--pill);border:0;border-radius:999px;padding:9px 14px;font-size:12px;color:var(--ink);cursor:pointer;appearance:none;-webkit-appearance:none;padding-right:30px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%235b4a3f' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;transition:background-color .3s var(--ease),transform .22s var(--ease),box-shadow .25s var(--ease)}
+.pill-select:hover{background-color:#e3d6c6;box-shadow:0 8px 18px -14px rgba(42,26,18,.25)}
+.pill-select:focus{outline:none;box-shadow:0 0 0 4px rgba(138,90,59,.08)}
+.btn-dark{background:var(--brown);color:#f6ede2;border-radius:999px;padding:10px 16px;font-size:12px;text-transform:uppercase;letter-spacing:.03em;border:0;cursor:pointer;position:relative;overflow:hidden;isolation:isolate;transition:transform .22s var(--ease),box-shadow .3s var(--ease),filter .25s var(--ease);white-space:normal;line-height:1.2;max-width:100%}
+.btn-dark::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.22) 50%,transparent 70%);transform:translateX(-120%);z-index:-1;transition:transform .8s var(--ease)}
+.btn-dark:hover{transform:translateY(-1px);box-shadow:0 10px 24px -12px rgba(59,33,22,.55);filter:brightness(1.02)}
+.btn-dark:hover::before{transform:translateX(120%)}
+.btn-dark:active{transform:translateY(0) scale(.985)}
+.btn-dark:disabled{opacity:.55;cursor:wait;transform:none;filter:none}
+
+/* Workspace: left / middle / right */
+.workspace{height:calc(100vh - 64px);padding:10px 12px 12px;display:grid;grid-template-columns:minmax(320px,1fr) minmax(330px,1.1fr) minmax(300px,.9fr);grid-template-rows:auto minmax(0,1fr);gap:8px 12px;align-items:stretch}
+.col{position:relative;height:100%;min-height:0;display:flex;flex-direction:column;background:var(--glass);backdrop-filter:blur(22px) saturate(130%);-webkit-backdrop-filter:blur(22px) saturate(130%);border:1px solid var(--glass-b);border-radius:var(--r);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 20px 40px -30px rgba(40,30,20,.25);overflow:hidden;transition:box-shadow .35s var(--ease),transform .35s var(--ease)}
+.col:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 28px 54px -36px rgba(40,30,20,.32)}
+.col.guide{outline:3px solid rgba(176,122,67,.9);outline-offset:3px;box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 0 7px rgba(176,122,67,.16),0 26px 50px -34px rgba(40,30,20,.42);animation:guidepulse 1.5s var(--ease) 3}
+@keyframes guidepulse{0%,100%{outline-color:rgba(176,122,67,.9);transform:translateY(0)}50%{outline-color:rgba(176,122,67,.2);transform:translateY(-4px)}}
+.guide-tag{position:absolute;top:12px;right:12px;z-index:6;background:var(--brown);color:#fff;font:700 10.5px "Inter Tight",system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border-radius:999px;box-shadow:0 10px 20px -12px rgba(59,33,22,.7);pointer-events:none;animation:guideTagIn .32s var(--ease)}
+@keyframes guideTagIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.col-head{padding:13px 16px 9px;border-bottom:1px solid var(--line);flex:none}
+.col-head h2{font-size:20px;font-weight:400;letter-spacing:-.02em;overflow-wrap:anywhere}
+.col-head p{font-size:12.5px;color:var(--ink-2);margin-top:2px;overflow-wrap:anywhere}
+.col-body{padding:12px 16px 14px;overflow:auto;min-height:0;min-width:0;flex:1}
+/* Step indicator: 1-2-3 */
+.steps{grid-column:1/-1;display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:wrap}
+.step{display:inline-flex;align-items:center;gap:7px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:5px 13px 5px 6px;cursor:pointer;color:var(--ink-2);font:600 12.5px "Inter Tight",system-ui,sans-serif;letter-spacing:.01em;white-space:nowrap;transition:background .3s var(--ease),color .3s var(--ease),box-shadow .3s var(--ease),transform .22s var(--ease)}
+.step:hover{background:#efe4d6;transform:translateY(-1px)}
+.step .s-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:rgba(42,26,18,.08);color:var(--ink-2);font-weight:700;font-size:12px;flex:none;line-height:1}
+.step .s-num svg{width:13px;height:13px;display:block}
+.step[aria-current="step"]{background:linear-gradient(180deg,#f7e8d2,#e9d2b2);border-color:rgba(138,90,59,.36);color:var(--brown);box-shadow:0 12px 24px -18px rgba(59,33,22,.55)}
+.step[aria-current="step"] .s-num{background:var(--brown);color:#fff}
+.step.done{color:#4f7d63}
+.step.done .s-num{background:#cfe3d7;color:#3f6b52}
+.s-line{flex:1 1 14px;min-width:14px;height:2px;border-radius:2px;background:rgba(42,26,18,.10)}
+.s-line.done{background:#bcd8c6}
+.step.pop{animation:steppop .55s var(--ease) 2}
+@keyframes steppop{0%,100%{transform:none}50%{transform:translateY(-2px) scale(1.06)}}
+.fields{display:grid;gap:10px}
+.fields.two{grid-template-columns:1fr 1fr}
+label{display:grid;gap:5px;font-size:11px;color:#6a594d;text-transform:uppercase;letter-spacing:.04em}
+.lbl{display:inline-flex;align-items:center;gap:4px;line-height:1.2}
+.lbl .ico{margin-right:0;vertical-align:0}
+input,textarea{width:100%;border:1px solid rgba(42,26,18,.1);border-radius:14px;background:rgba(255,253,249,.78);color:var(--ink);padding:11px 13px;font-size:14px;resize:vertical;line-height:1.4;transition:border-color .25s var(--ease),background .25s var(--ease),box-shadow .25s var(--ease),transform .2s var(--ease)}
+input:focus,textarea:focus,select:focus{outline:none;border-color:rgba(59,33,22,.28);background:#fff;box-shadow:0 0 0 4px rgba(138,90,59,.08)}
+input:hover,textarea:hover{border-color:rgba(42,26,18,.16)}
+.actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+.status{font-size:12.5px;color:var(--ink-2);transition:opacity .25s var(--ease),color .25s var(--ease);min-height:1.2em;overflow-wrap:anywhere}
+
+/* Middle dialogue */
+.dialogue{display:grid;gap:10px}
+.msg{border:1px solid rgba(42,26,18,.08);border-radius:16px;padding:12px 14px;background:rgba(255,253,249,.58);transition:transform .25s var(--ease),box-shadow .25s var(--ease),border-color .25s var(--ease)}
+.msg.ai{background:rgba(255,253,249,.9)}
+.msg:hover{box-shadow:0 10px 22px -18px rgba(40,20,10,.22);border-color:rgba(42,26,18,.12)}
+.msg .role{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:#8a7a6e;margin-bottom:5px}
+.msg .content{white-space:pre-wrap;line-height:1.5;font-size:13.5px}
+/* Kid-friendly: mascot avatar, field icons, "fix this" highlight */
+.msg.ai{display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:10px;align-items:start}
+.msg.ai .avatar{grid-area:1/1/3/2;width:34px;height:34px;border-radius:12px;background:linear-gradient(180deg,#f7e8d2,#e8d0af);border:1px solid rgba(138,90,59,.22);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 14px -10px rgba(59,33,22,.4)}
+.msg.ai .avatar svg{width:24px;height:24px;display:block}
+.msg.ai .role{grid-area:1/2/2/3}
+.msg.ai .content{grid-area:2/2/3/3}
+.ico{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;margin-right:4px;vertical-align:-2px;color:#8a5a3b}
+.ico svg{width:13px;height:13px;display:block}
+.need-fix{color:#a3402f}
+.need-fix textarea,.need-fix input{border-color:#c0503f;box-shadow:0 0 0 3px rgba(192,80,63,.12);animation:needfix 1.7s ease-in-out infinite}
+@keyframes needfix{0%,100%{box-shadow:0 0 0 3px rgba(192,80,63,.10)}50%{box-shadow:0 0 0 6px rgba(192,80,63,.22)}}
+.fixring{animation:fixpulse 1.6s ease-in-out infinite}
+@keyframes fixpulse{0%,100%{opacity:.85}50%{opacity:.2}}
+.conflict-face{display:inline-flex;align-items:center;margin-right:5px;vertical-align:-3px}
+.conflict-face svg{display:block}
+.dot{display:inline-block;width:8px;height:8px;border-radius:999px;margin-right:5px;vertical-align:middle}
+.t-node .t-icon{display:inline-block;width:11px;height:11px;vertical-align:-1px;margin-right:3px}
+.t-node .t-icon svg{width:11px;height:11px;display:block}
+@media (prefers-reduced-motion: reduce){.need-fix textarea,.need-fix input,.fixring{animation:none}}
+.reply{margin-top:auto;padding:10px 16px 14px;border-top:1px solid var(--line);background:rgba(246,240,231,.35);flex:none}
+.reply label{margin-bottom:8px}
+.reply textarea{min-height:88px}
+
+/* Visualization */
+.meter-row{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:8px;font-size:13px}
+.meter{height:10px;background:rgba(42,26,18,.07);border-radius:999px;overflow:hidden;position:relative;box-shadow:inset 0 1px 2px rgba(42,26,18,.06)}
+#conflictMeter{height:100%;width:0%;background:linear-gradient(90deg,#d8b48d 0%,#c48b5c 45%,#8a5a3b 100%);transition:width .7s var(--ease);box-shadow:0 0 14px rgba(138,90,59,.28);position:relative}
+#conflictMeter::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.35),transparent);border-radius:999px}
+.map{margin-top:10px;position:relative;border-radius:20px;padding:6px 6px 2px;overflow:hidden;transition:box-shadow .35s var(--ease);background:
+  radial-gradient(circle at 20% 10%,rgba(255,255,255,.55),transparent 38%),
+  radial-gradient(circle at 80% 90%,rgba(216,180,141,.12),transparent 35%),
+  linear-gradient(180deg,rgba(255,253,249,.5),rgba(246,240,231,.35));
+ border:1px solid rgba(255,255,255,.65);box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
+.map:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 10px 24px -20px rgba(59,33,22,.12)}
+.map::before{content:"";position:absolute;inset:0;border-radius:20px;background-image:radial-gradient(rgba(42,26,18,.07) 1px,transparent 1px);background-size:14px 14px;opacity:.55;pointer-events:none}
+.toulmin-svg{width:100%;max-width:100%;height:auto;display:block;overflow:hidden;position:relative;z-index:1}
+.t-link{fill:none;stroke:rgba(42,26,18,.16);stroke-width:2;stroke-linecap:round;transition:stroke .4s var(--ease),stroke-width .4s var(--ease),opacity .4s,filter .4s var(--ease)}
+.t-link.active{stroke:rgba(138,90,59,.62);stroke-width:2.8;stroke-dasharray:7 6;animation:flow 1.4s linear infinite;filter:drop-shadow(0 0 4px rgba(138,90,59,.18))}
+@keyframes flow{to{stroke-dashoffset:-26}}
+.t-node{transition:transform .28s var(--ease),filter .28s var(--ease);transform-box:fill-box;transform-origin:center}
+.t-node:hover{transform:translateY(-1px)}
+.t-node rect.main{stroke-width:1.2;transition:all .35s var(--ease)}
+.t-node text{font-family:"Inter Tight",system-ui,sans-serif}
+.t-node .t-title{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+.t-node .t-body{font-size:10.5px;fill:#3b2a20}
+.t-node .t-badge{font-size:8.5px;fill:#fff;font-weight:600}
+.t-node.active rect.main{stroke-width:2;filter:url(#glow)}
+.t-node.active .pulse{animation:pulse 1.9s var(--ease) infinite}
+.t-node.active .ring{animation:ring 2.4s ease-out infinite}
+@keyframes pulse{0%,100%{opacity:.22;transform-box:fill-box;transform-origin:center;transform:scale(1)}50%{opacity:.02;transform:scale(1.09)}}
+@keyframes ring{0%{opacity:.35;stroke-width:1;transform-box:fill-box;transform-origin:center;transform:scale(.98)}100%{opacity:0;stroke-width:.5;transform:scale(1.18)}}
+.map-wrap{position:relative}
+.map-tooltip{position:absolute;z-index:20;max-width:min(320px,calc(100% - 12px));padding:12px 14px;border-radius:16px;background:rgba(255,253,249,.98);border:1px solid rgba(59,33,22,.14);box-shadow:0 18px 40px -20px rgba(40,20,10,.45),inset 0 1px 0 rgba(255,255,255,.8);color:var(--ink);font-size:13px;line-height:1.45;pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .15s var(--ease),transform .15s var(--ease);overflow-wrap:anywhere}
+.map-tooltip.show{opacity:1;transform:translateY(0)}
+.map-tooltip .tt-title{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8a5a3b;margin-bottom:6px}
+.map-tooltip .tt-body{white-space:pre-wrap}
+.map-tooltip .tt-fb{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);color:#6b4030;font-size:12.5px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:-10px;position:relative;z-index:2;min-width:0}
+.detail{border:1px solid rgba(42,26,18,.08);border-radius:14px;padding:9px 10px;background:rgba(255,253,249,.62);font-size:12px;transition:all .3s var(--ease);box-shadow:0 6px 14px -12px rgba(59,33,22,.2);min-width:0;overflow:hidden}
+.detail:hover{border-color:rgba(138,90,59,.2);box-shadow:0 10px 20px -16px rgba(59,33,22,.22);transform:translateY(-1px)}
+.detail.active{border-color:rgba(138,90,59,.38);background:linear-gradient(180deg,rgba(255,251,246,.95),rgba(255,253,249,.82));transform:translateY(-1px);box-shadow:0 12px 22px -18px rgba(138,90,59,.22)}
+.detail .d-head{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#8a7a6e}
+.detail .d-fb{margin-top:5px;color:#6b4030;line-height:1.35;overflow-wrap:anywhere;word-break:break-word}
+/* Fix-this popup toast (screen top-center) */
+.fix-toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:60;max-width:min(560px,92vw);display:flex;align-items:flex-start;gap:10px;background:#fffaf5;border:1px solid rgba(192,80,63,.35);border-left:5px solid #c0503f;border-radius:16px;padding:11px 13px;box-shadow:0 24px 50px -28px rgba(59,33,22,.55);cursor:pointer;animation:toastIn .4s var(--ease)}
+.fix-toast[hidden]{display:none}
+.ft-icon{flex:none;width:20px;height:20px;color:#c0503f;margin-top:1px}
+.ft-icon svg{width:20px;height:20px;display:block}
+.ft-body{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ft-title{font-size:12px;color:#a3402f;letter-spacing:.02em}
+.ft-text{font-size:13px;line-height:1.45;color:#3b2116}
+.ft-close{flex:none;background:none;border:0;font-size:18px;line-height:1;color:#8a7a6e;cursor:pointer;padding:0 2px}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,-10px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* Dialog */
+dialog.dialog{width:min(560px,calc(100vw - 24px));border:1px solid var(--glass-b);border-radius:24px;padding:0;background:rgba(246,240,231,.97);backdrop-filter:blur(18px);opacity:1;transform:translateY(0) scale(1);transition:opacity .28s var(--ease),transform .28s var(--ease),display .28s allow-discrete,overlay .28s allow-discrete}
+dialog.dialog:not([open]){opacity:0;transform:translateY(8px) scale(.985)}
+@starting-style{dialog.dialog[open]{opacity:0;transform:translateY(8px) scale(.985)}}
+dialog::backdrop{background:rgba(42,26,18,.18);transition:opacity .28s,display .28s allow-discrete,overlay .28s allow-discrete}
+dialog:not([open])::backdrop{opacity:0}
+@starting-style{dialog[open]::backdrop{opacity:0}}
+dialog form,.feas-form{padding:22px;display:grid;gap:12px}
+dialog h3{font-size:26px;font-weight:400;letter-spacing:-.03em}
+.dialog-note{font-size:13px;color:var(--ink-2);line-height:1.45}
+.user-badge{font-size:12px;color:var(--ink-2);background:rgba(255,253,249,.7);border:1px solid rgba(42,26,18,.08);padding:7px 10px;border-radius:999px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:background .25s var(--ease),border-color .25s var(--ease),box-shadow .25s var(--ease)}
+.user-badge:not(:empty):hover{background:rgba(255,253,249,.92);box-shadow:0 8px 18px -14px rgba(42,26,18,.2)}
+.assignment-banner{position:relative;margin:10px 10px 0;padding:10px 12px 10px 36px;border-radius:14px;background:rgba(138,90,59,.08);border:1px solid rgba(138,90,59,.16);font-size:12.5px;color:var(--ink-2);line-height:1.4;transition:opacity .25s var(--ease),transform .25s var(--ease),box-shadow .25s var(--ease);overflow-wrap:anywhere}
+.assignment-banner:hover{box-shadow:0 12px 24px -18px rgba(138,90,59,.25)}
+.assignment-dismiss{position:absolute;top:1px;left:6px;width:22px;height:22px;border:0;border-radius:999px;background:rgba(42,26,18,.08);color:var(--ink-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;padding:0 0 1px 0;transition:background .2s var(--ease),color .2s var(--ease),transform .2s var(--ease)}.assignment-dismiss:hover{background:rgba(42,26,18,.14);color:var(--ink);transform:scale(1.04)}.assignment-dismiss:active{transform:scale(.96)}
+.assignment-banner strong{color:var(--brown);display:block;margin-bottom:2px}
+.assignment-banner button{margin-top:8px}
+.login-dialog{width:min(460px,calc(100vw - 24px))}
+.login-actions{display:grid;gap:8px}
+.demo-account{font-size:12px;color:var(--ink-2);background:rgba(42,26,18,.04);padding:10px 12px;border-radius:14px;line-height:1.5}
+.teacher-app{height:calc(100vh - 64px);padding:12px;overflow:hidden}
+.teacher-shell{display:grid;grid-template-columns:minmax(300px,3fr) minmax(0,7fr);gap:12px;height:100%;min-height:0}
+.tpanel{background:var(--glass);backdrop-filter:blur(22px) saturate(130%);-webkit-backdrop-filter:blur(22px) saturate(130%);border:1px solid var(--glass-b);border-radius:var(--r);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 20px 40px -30px rgba(40,30,20,.25);padding:16px;overflow-y:auto;min-height:0;transition:box-shadow .35s var(--ease)}
+.tpanel:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 26px 50px -34px rgba(40,30,20,.3)}
+.panel-title h2{font-size:22px;font-weight:400;letter-spacing:-.02em}
+.panel-title p{font-size:13px;color:var(--ink-2);margin-top:2px}
+.publish-form{display:grid;gap:14px;margin-top:16px}
+.publish-form input,.publish-form textarea{padding:13px 14px;font-size:14px}
+.publish-form label{font-size:11.5px;gap:6px}
+.active-box{margin-top:14px;padding:12px 14px;border-radius:16px;background:rgba(138,90,59,.08);border:1px solid rgba(138,90,59,.16);font-size:13px;line-height:1.5;color:var(--ink-2)}
+.active-box strong{color:var(--brown)}
+.assign-filter{display:flex;gap:10px;align-items:flex-end;margin-top:14px;flex-wrap:wrap}
+.data-section{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.subhead{font-size:15px;font-weight:600;color:var(--brown);margin:0 0 10px}
+.stats-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+.stat-card{background:rgba(255,253,249,.72);border:1px solid rgba(255,255,255,.75);border-radius:16px;padding:12px;transition:transform .28s var(--ease),box-shadow .28s var(--ease),border-color .28s}
+.stat-card:hover{transform:translateY(-3px);box-shadow:0 18px 34px -24px rgba(59,33,22,.35);border-color:rgba(138,90,59,.16)}
+.stat-card span{display:block;font-size:11px;color:#8a7a6e;text-transform:uppercase;letter-spacing:.06em}
+.stat-card b{display:block;font-size:28px;font-weight:500;color:var(--brown);margin-top:4px;letter-spacing:-.03em}
+.stat-card small{font-size:12px;color:var(--ink-2)}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.charts-rich{grid-template-columns:repeat(3,minmax(0,1fr))}
+.hist{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;align-items:end;height:140px;padding-top:8px}
+.hist-col{display:grid;grid-template-rows:1fr auto auto;gap:4px;align-items:end;height:100%}
+.hist-bar-wrap{height:100%;display:flex;align-items:flex-end}
+.hist-bar{width:100%;border-radius:10px 10px 4px 4px;background:linear-gradient(180deg,#d8b48d,#8a5a3b);min-height:4px;transition:height .8s cubic-bezier(.22,1,.36,1),filter .25s var(--ease),transform .25s var(--ease);box-shadow:0 6px 14px -10px rgba(138,90,59,.45);transform-origin:bottom}
+.hist-bar:hover{filter:brightness(1.04);transform:scaleY(1.02)}
+.hist-x,.hist-v{font-size:11px;text-align:center;color:#8a7a6e}
+.hist-v{color:var(--ink);font-weight:500}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.legend span{font-size:11px;color:var(--ink-2);background:rgba(42,26,18,.04);padding:4px 8px;border-radius:999px}
+.chart-card{background:rgba(255,253,249,.72);border:1px solid rgba(255,255,255,.75);border-radius:18px;padding:14px;min-height:220px;transition:transform .28s var(--ease),box-shadow .28s var(--ease)}
+.chart-card:hover{transform:translateY(-2px);box-shadow:0 16px 30px -22px rgba(59,33,22,.28)}
+.chart-card h3{font-size:14px;font-weight:600;color:var(--brown);margin:0 0 10px;overflow-wrap:anywhere;line-height:1.25}
+.chart{font-size:13px;color:var(--ink-2)}
+.bar-row{display:grid;grid-template-columns:minmax(72px,120px) 1fr auto;gap:8px;align-items:center;margin-top:8px}
+.bar-label{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.bar-track{height:10px;border-radius:999px;background:rgba(42,26,18,.07);overflow:hidden}
+.bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#d8b48d,#8a5a3b);transition:width .85s cubic-bezier(.22,1,.36,1),filter .25s var(--ease);position:relative}
+.bar-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);transform:translateX(-120%);animation:barSheen 3s ease-in-out infinite;pointer-events:none}
+@keyframes barSheen{to{transform:translateX(120%)}}
+.bar-row:hover .bar-fill{filter:brightness(1.03)}
+.bar-val{font-size:12px;color:var(--ink);min-width:24px;text-align:right;transition:color .2s}
+.recent-list{display:grid;gap:8px;max-height:280px;overflow:auto}
+.recent-item{padding:10px 12px;border-radius:14px;background:rgba(246,240,231,.5);border:1px solid rgba(42,26,18,.06);transition:transform .25s var(--ease),box-shadow .25s var(--ease),border-color .25s var(--ease),background .25s var(--ease)}
+.recent-item:hover{transform:translateY(-2px);box-shadow:0 10px 24px -18px rgba(40,20,10,.35);border-color:rgba(138,90,59,.18);background:rgba(251,247,241,.72)}
+.recent-item .m{font-size:11px;color:#8a7a6e;text-transform:uppercase;letter-spacing:.04em}
+.recent-item .t{font-size:13px;color:var(--ink);margin-top:2px;overflow-wrap:anywhere}
+.empty-note{padding:18px;text-align:center;color:var(--ink-2);font-size:13px;background:rgba(42,26,18,.03);border-radius:14px}
+@media(max-width:1100px){.teacher-shell,.charts-grid{grid-template-columns:1fr}.charts-rich{grid-template-columns:1fr}.stats-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1101px) and (max-width:1380px){.charts-rich{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1100px){.teacher-app{height:auto;overflow:visible}.teacher-shell{height:auto}.tpanel{max-height:none}}
+@media(max-width:860px){.user-badge{display:none}body{overflow:auto}.teacher-app{height:auto;min-height:calc(100vh - 64px)}}
+
+@media(max-width:1180px){body{overflow:auto} .workspace{height:auto;grid-template-columns:1fr 1fr;grid-template-rows:auto}.col{height:auto;min-height:420px}.col.left{grid-column:1/-1}}
+@media(max-width:860px){
+  body{overflow:auto}
+  .workspace{height:auto;grid-template-columns:1fr;grid-template-rows:auto}
+  .col,.col.left{height:auto;min-height:320px}
+  .dialogue{min-height:220px}
+  .brand p{display:none}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important}
+}
+  </style>
+</head>
+<body>
+  <div id="fixToast" class="fix-toast" role="status" aria-live="polite" hidden>
+    <span class="ft-icon" id="fixToastIcon" aria-hidden="true"></span>
+    <div class="ft-body"><strong class="ft-title">Fix this: <span id="fixToastTarget"></span></strong><span class="ft-text" id="fixToastText"></span></div>
+    <button type="button" class="ft-close" id="fixToastClose" aria-label="Close">×</button>
+  </div>
+  <header class="nav">
+    <div class="brand">
+      <svg viewBox="0 0 40 40" fill="#2a1a12" aria-hidden="true"><path d="M5 5h13v13H5zM22 22h13v13H22z"/><path d="M22 5a13 13 0 0 1 13 13H22zM18 35A13 13 0 0 1 5 22h13z"/></svg>
+      <div>
+        <h1>ArgumentCraft</h1>
+        <p>Build · Ask · Improve</p>
+      </div>
+    </div>
+    <div class="nav-r">
+      <select id="personaSelect" class="pill-select" aria-label="AI debate persona">
+        <option value="socratic">Question Buddy</option>
+        <option value="gentle">Kind Coach</option>
+        <option value="rigorous">Careful Checker</option>
+        <option value="challenger">Friendly Challenger</option>
+        <option value="debate">Debate Buddy</option>
+      </select>
+      <span id="userBadge" class="user-badge"></span>
+      
+      <button class="pill" id="settingsBtn" type="button">API</button>
+      <button class="pill" id="exportBtn" type="button">Export</button>
+      <button class="pill" id="loginBtn" type="button">Sign In</button>
+      <button class="pill" id="logoutBtn" type="button" style="display:none">Sign Out</button>
+      <button class="btn-dark" id="resetBtn" type="button">Reset</button>
+    </div>
+  </header>
+
+  <main id="studentApp" class="workspace" style="display:none">
+    <nav class="steps" id="stepsBar" aria-label="Steps">
+      <button class="step" type="button" data-step="1" aria-current="step"><span class="s-num">1</span><span class="s-label">Write my idea</span></button>
+      <span class="s-line" aria-hidden="true"></span>
+      <button class="step" type="button" data-step="2"><span class="s-num">2</span><span class="s-label">See my map</span></button>
+      <span class="s-line" aria-hidden="true"></span>
+      <button class="step" type="button" data-step="3"><span class="s-num">3</span><span class="s-label">Talk with AI</span></button>
+    </nav>
+    <!-- Left: Toulmin / argument map -->
+    <section class="col left" aria-label="Toulmin argument map">
+      <div id="assignmentBanner" class="assignment-banner" style="display:none"></div>
+      <div class="col-head">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <h2>Argument Map</h2>
+        </div>
+        <p>Build your argument.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="pill" data-demo="warrant" type="button"><i class="ico"></i>Weak Reason</button>
+          <button class="pill" data-demo="grounds" type="button"><i class="ico"></i>Not Enough Proof</button>
+          <button class="pill" data-demo="rebuttal" type="button"><i class="ico"></i>Missing Other Side</button>
+        </div>
+      </div>
+      <div class="col-body">
+        <div class="fields">
+          <label>Debate Topic<input id="topic" style="min-height:34px;padding:6px 13px" placeholder="Type the question here." /></label>
+          <label>Your Stance<input id="stance" style="min-height:34px;padding:6px 13px" placeholder="Yes or no? Why?" /></label>
+        </div>
+        <div class="fields two" style="margin-top:10px">
+          <label><span class="lbl"><i class="ico"></i>Claim</span><textarea id="claim" rows="3" placeholder="Your big idea"></textarea></label>
+          <label><span class="lbl"><i class="ico"></i>Grounds</span><textarea id="grounds" rows="3" placeholder="Your proof"></textarea></label>
+          <label><span class="lbl"><i class="ico"></i>Warrant</span><textarea id="warrant" rows="3" placeholder="Why it fits"></textarea></label>
+          <label><span class="lbl"><i class="ico"></i>Backing</span><textarea id="backing" rows="3" placeholder="More support"></textarea></label>
+          <label><span class="lbl"><i class="ico"></i>Qualifier</span><textarea id="qualifier" rows="3" placeholder="When is it true?"></textarea></label>
+          <label><span class="lbl"><i class="ico"></i>Rebuttal</span><textarea id="rebuttal" rows="3" placeholder="The other side"></textarea></label>
+        </div>
+        <div class="actions">
+          <button id="startBtn" class="btn-dark" type="button">Begin Debate</button>
+          <span id="status" class="status"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Middle: Visualization -->
+    <section class="col middle" aria-label="Thinking visualization">
+      <div class="col-head">
+        <h2>Thinking Map</h2>
+        <p>See what to fix.</p>
+      </div>
+      <div class="col-body">
+        <div>AI is asking about: <strong id="targetLabel">overall</strong></div>
+        <div class="meter-row"><span><span id="conflictFace" class="conflict-face"></span>Cognitive Conflict <strong id="conflictLabel">-</strong></span><div class="meter"><div id="conflictMeter"></div></div></div>
+        <div class="map-wrap">
+          <div id="toulminMap" class="map"></div>
+          <div id="mapTooltip" class="map-tooltip" aria-hidden="true"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Socratic dialogue -->
+    <section class="col right" aria-label="Socratic dialogue">
+      <div class="col-head">
+        <h2>Talk with AI</h2>
+        <p>Answer the AI's questions.</p>
+      </div>
+      <div class="col-body">
+        <div id="dialogue" class="dialogue"></div>
+      </div>
+      <form id="replyForm" class="reply">
+        <label>Your answer<textarea id="learnerMessage" rows="3" placeholder="Type your answer here..."></textarea></label>
+        <div class="actions"><button class="btn-dark" type="submit">Send</button></div>
+      </form>
+    </section>
+  </main>
+
+  <dialog id="settingsDialog" class="dialog">
+    <form method="dialog" id="settingsForm">
+      <h3>OpenAI-Compatible API Settings</h3>
+      <p class="dialog-note">Demo defaults are pre-filled. Changes are saved in this browser only.</p>
+      <label>API Key<input id="apiKey" type="text" autocomplete="off" placeholder="sk-..." /></label>
+      <label>Base URL (optional)<input id="baseUrl" placeholder="https://api.siliconflow.cn/v1" /></label>
+      <label>Model<input id="model" placeholder="Qwen/Qwen2.5-7B-Instruct" /></label>
+      <div class="actions" style="justify-content:flex-end">
+        <button value="cancel" class="pill" type="button" id="cancelSettings">Cancel</button>
+        <button id="saveSettings" value="default" class="btn-dark" type="button">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <main id="teacherApp" class="teacher-app" style="display:none">
+    <div class="teacher-shell">
+      <section class="tpanel publish-panel">
+        <div class="panel-title"><h2>Publish a Shared Prompt</h2><p>Create a debate topic for the class. Students will see it after signing in.</p></div>
+        <div class="publish-form">
+          <label>Assignment Title<input id="assignTitle" placeholder="e.g. Week 6 Classroom Debate" /></label>
+          <label>Debate Topic<input id="assignTopic" placeholder="Enter the shared debate topic" /></label>
+          <label>Suggested Stance / Notes<input id="assignStance" placeholder="Optional" /></label>
+          <label>Additional Instructions<textarea id="assignDesc" rows="6.5" placeholder="Optional"></textarea></label>
+          <div class="actions"><button type="button" class="btn-dark" id="publishAssignment">Publish as Current Topic</button></div>
+          <div id="teacherStatus" class="status"></div>
+        </div>
+        <div id="activeAssignmentBox" class="active-box"></div>
+      </section>
+
+      <section class="tpanel charts-panel">
+        <div class="panel-title"><h2>Learning Progress</h2><p>View published prompts and self-directed practice separately.</p></div>
+        <div class="assign-filter">
+          <label style="margin:0;min-width:220px;flex:1">Published Prompt
+            <select id="assignmentFilter" class="pill-select" style="width:100%;margin-top:6px;text-transform:none;letter-spacing:0;font-size:13px"></select>
+          </label>
+          <button type="button" class="pill" id="refreshTeacherData">Refresh</button>
+        </div>
+
+        <div class="data-section">
+          <h3 class="subhead">Published Prompts · Summary</h3>
+          <div id="statsCards" class="stats-cards"></div>
+          <div class="charts-grid charts-rich">
+            <div class="chart-card"><h3>Student Participation</h3><div id="chartStudents" class="chart"></div></div>
+            <div class="chart-card"><h3>Toulmin Focus Distribution</h3><div id="chartFocus" class="chart"></div></div>
+            <div class="chart-card"><h3>Cognitive Conflict Distribution</h3><div id="chartConflict" class="chart"></div></div>
+            <div class="chart-card" style="grid-column:1/-1"><h3>Recent Records</h3><div id="recentList" class="chart recent-list"></div></div>
+          </div>
+        </div>
+
+        <div class="data-section" style="margin-top:14px">
+          <h3 class="subhead">Self-Directed Practice · Separate View</h3>
+          <div id="selfStatsCards" class="stats-cards"></div>
+          <div class="charts-grid charts-rich">
+            <div class="chart-card"><h3>Practice Participation</h3><div id="chartSelfStudents" class="chart"></div></div>
+            <div class="chart-card"><h3>Practice Focus Distribution</h3><div id="chartSelfFocus" class="chart"></div></div>
+            <div class="chart-card"><h3>Practice Conflict Distribution</h3><div id="chartSelfConflict" class="chart"></div></div>
+            <div class="chart-card" style="grid-column:1/-1"><h3>Practice Records</h3><div id="selfRecentList" class="chart recent-list"></div></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <dialog id="loginDialog" class="dialog login-dialog">
+    <form id="loginForm" class="login-actions" method="dialog">
+      <h3>Sign in to ArgumentCraft</h3>
+      <p class="dialog-note">Sign in as a student or teacher.</p>
+      <label>Username<input id="loginUsername" name="ac-user" autocomplete="off" placeholder="teacher / student" /></label>
+      <label>Password<input id="loginPassword" name="ac-pass" type="password" autocomplete="new-password" placeholder="Demo password" /></label>
+      <div class="demo-account"><strong>Demo Accounts</strong><br>Teacher: <code>teacher</code> / <code>ArgueTch_6065</code><br>Student: <code>student</code> / <code>ArgueStu_6065</code></div>
+      <div id="loginError" class="status" style="color:#8a3a2a"></div>
+      <div class="actions" style="justify-content:flex-end">
+        <button type="button" class="pill" id="fillTeacher">Use Teacher</button>
+        <button type="button" class="pill" id="fillStudent">Use Student</button>
+        <button type="submit" class="btn-dark">Sign In</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+(() => {
+  const FIELDS = [["claim","Claim"],["grounds","Grounds"],["warrant","Warrant"],["backing","Backing"],["qualifier","Qualifier"],["rebuttal","Rebuttal"]];
+  const SVG_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+  const ICONS = {
+    claim: SVG_OPEN+'<path d="M9.2 17.5h5.6"/><path d="M10 20.5h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.5.4.8.9.9 1.5l.1.7h5.2l.1-.7c.1-.6.4-1.1.9-1.5A6 6 0 0 0 12 3Z"/></svg>',
+    grounds: SVG_OPEN+'<circle cx="10.5" cy="10.5" r="6"/><path d="m20 20-4.6-4.6"/></svg>',
+    warrant: SVG_OPEN+'<path d="M9.6 14.4 14.4 9.6"/><path d="M6.8 12.2 5.4 13.6a3.4 3.4 0 0 0 4.8 4.8l1.4-1.4"/><path d="M17.2 11.8l1.4-1.4a3.4 3.4 0 0 0-4.8-4.8L12.4 7"/></svg>',
+    backing: SVG_OPEN+'<rect x="4" y="12.5" width="16" height="7" rx="1.6"/><rect x="7.5" y="5.5" width="9" height="5.6" rx="1.6"/></svg>',
+    qualifier: SVG_OPEN+'<path d="M12 4.5v15"/><path d="M8.5 19.5h7"/><path d="M5.5 8h13"/><path d="M5.5 8 3 13.4h5z"/><path d="M18.5 8 16 13.4h5z"/></svg>',
+    rebuttal: SVG_OPEN+'<path d="M4 8.5h9"/><path d="m10 5.5-3 3 3 3"/><path d="M20 15.5h-9"/><path d="m14 12.5 3 3-3 3"/></svg>',
+    warn: SVG_OPEN+'<path d="M12 4.5 21 19.5H3z"/><path d="M12 10v4"/><path d="M12 16.6h.01"/></svg>'
+  };
+  function injectIcons(){
+    const keys = ['claim','grounds','warrant','backing','qualifier','rebuttal'];
+    document.querySelectorAll('.fields.two > label > .lbl > i.ico').forEach((el,i)=>{ el.innerHTML = ICONS[keys[i]] || ''; });
+    document.querySelectorAll('[data-demo] > i.ico').forEach(el=>{
+      const k = el.parentElement.getAttribute('data-demo');
+      el.innerHTML = ICONS[k] || ICONS.warn;
+    });
+  }
+  function thermometer(level){
+    const lv = Math.max(0, Math.min(5, Number(level)||0));
+    const fill = 11*lv/5;
+    const col = lv===0 ? '#c3b4a6' : lv<=2 ? '#5f8f72' : lv<=3 ? '#c08a3e' : '#c0503f';
+    return `<svg width="13" height="20" viewBox="0 0 14 22" role="img" aria-label="Conflict level ${lv} of 5"><rect x="5" y="2" width="4" height="14" rx="2" fill="rgba(42,26,18,.07)" stroke="rgba(42,26,18,.28)" stroke-width="1"/><rect x="5.9" y="${13-fill}" width="2.2" height="${fill}" rx="1.1" fill="${col}"/><circle cx="7" cy="18.4" r="3.2" fill="${col}"/></svg>`;
+  }
+  const AVATAR_SVG = '<svg viewBox="0 0 32 32" role="img" aria-label="Pip the owl"><circle cx="16" cy="17" r="12" fill="#fffaf2" stroke="#8a5a3b" stroke-width="1.4"/><path d="M6 8l5 4M26 8l-5 4" stroke="#8a5a3b" stroke-width="1.4" fill="none" stroke-linecap="round"/><circle cx="11.5" cy="16" r="3.4" fill="#fff" stroke="#8a5a3b" stroke-width="1.2"/><circle cx="20.5" cy="16" r="3.4" fill="#fff" stroke="#8a5a3b" stroke-width="1.2"/><circle cx="11.5" cy="16" r="1.4" fill="#3b2116"/><circle cx="20.5" cy="16" r="1.4" fill="#3b2116"/><path d="M16 19l2.4 3h-4.8z" fill="#e0a44a"/></svg>';
+  const state = { history: [], lastResult: null, talking: false, token: localStorage.getItem('ac_token')||'', user: null, assignment: null, assignmentApplied: false };
+  async function api(path, opts={}){
+    const headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
+    if(state.token) headers.Authorization = 'Bearer ' + state.token;
+    const res = await fetch(path, Object.assign({}, opts, {headers}));
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(data.detail || 'Request failed');
+    return data;
+  }
+  const $ = id => document.getElementById(id);
+  const dialogueEl = $('dialogue'), statusEl = $('status'), settingsDialog = $('settingsDialog');
+  function loadSettings(){ $('apiKey').value = localStorage.getItem('ac_api_key')||'sk-dlbhvgfpizrbfyfniixeumhpafrltkmzxxpwssrnygafonxr'; $('baseUrl').value = localStorage.getItem('ac_base_url')||'https://api.siliconflow.cn/v1'; $('model').value = localStorage.getItem('ac_model')||'Qwen/Qwen2.5-7B-Instruct'; $('personaSelect').value = localStorage.getItem('ac_persona')||'socratic'; }
+  function saveSettings(){ localStorage.setItem('ac_api_key',$('apiKey').value.trim()); localStorage.setItem('ac_base_url',$('baseUrl').value.trim()); localStorage.setItem('ac_model',$('model').value.trim()||'Qwen/Qwen2.5-7B-Instruct'); }
+  function settingsPayload(){ return { api_key: localStorage.getItem('ac_api_key')||null, base_url: localStorage.getItem('ac_base_url')||null, model: localStorage.getItem('ac_model')||null }; }
+  function getToulmin(){ const d={}; for (const [k] of FIELDS) d[k]=$(k).value.trim(); return d; }
+  function esc(t){ return String(t).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+  function attr(t){ return esc(t).replaceAll('"','&quot;').replaceAll("'","&#39;"); }
+  function addMessage(role, content){
+    const div=document.createElement('div'); div.className=`msg ${role==='assistant'?'ai':'user'}`;
+    div.innerHTML = role==='assistant'
+      ? `<div class="avatar" aria-hidden="true">${AVATAR_SVG}</div><div class="role">Pip · Debate Buddy</div><div class="content">${esc(content)}</div>`
+      : `<div class="role">You</div><div class="content">${esc(content)}</div>`;
+    dialogueEl.appendChild(div);
+    const body = dialogueEl.parentElement;
+    if (body) body.scrollTop = body.scrollHeight;
+  }
+  function shortText(v, n=28){ v=(v||'').trim(); return v ? (v.length>n ? v.slice(0,n-1)+'…' : v) : 'Not yet added'; }
+
+  function downloadText(filename, text, type){
+    const blob = new Blob([text], {type: type||'text/plain;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 500);
+  }
+  function exportDebate(){
+    const now = new Date();
+    const pad=n=>String(n).padStart(2,'0');
+    const stamp = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const fileStamp = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+    const topic = ($('topic')?.value||'').trim();
+    const stance = ($('stance')?.value||'').trim();
+    const persona = ($('personaSelect')?.selectedOptions?.[0]?.text) || $('personaSelect')?.value || 'socratic';
+    const t = getToulmin();
+    const lines = [];
+    lines.push('# ArgumentCraft Debate Export');
+    lines.push('');
+    lines.push(`- Exported: ${stamp}`);
+    if(state.user) lines.push(`- Learner: ${state.user.display_name||state.user.username} (${state.user.username})`);
+    lines.push(`- AI Persona: ${persona}`);
+    lines.push(`- Topic: ${topic||'(not provided)'}`);
+    if(stance) lines.push(`- Stance: ${stance}`);
+    lines.push('');
+    lines.push('## Toulmin Argument Map');
+    for(const [k,label] of FIELDS){ lines.push(`### ${label}`); lines.push((t[k]||'').trim() || '(not provided)'); lines.push(''); }
+    lines.push('## Dialogue History');
+    if(!state.history.length){ lines.push('(No dialogue yet)'); lines.push(''); }
+    else state.history.forEach((m,i)=>{ lines.push(`### ${i+1}. ${m.role==='assistant'?'AI Socratic Questions':'Learner'}`); lines.push((m.content||'').trim()); lines.push(''); });
+    lines.push('## Latest AI Feedback');
+    const r = state.lastResult;
+    if(!r){ lines.push('(No AI feedback yet)'); }
+    else{
+      lines.push(`- Challenge Focus: ${r.target_element||'overall'}`);
+      lines.push(`- Cognitive Conflict Level: ${r.conflict_level||''}`);
+      if(r.challenge_summary) lines.push(`- Challenge Summary: ${r.challenge_summary}`);
+      if(r.suggested_revision) lines.push(`- Suggested Revision: ${r.suggested_revision}`);
+      if(Array.isArray(r.socratic_questions) && r.socratic_questions.length){
+        lines.push(''); lines.push('### Socratic Questions');
+        r.socratic_questions.forEach((q,i)=>lines.push(`${i+1}. ${q}`));
+      }
+      if(r.toulmin_feedback && typeof r.toulmin_feedback==='object'){
+        lines.push(''); lines.push('### Toulmin Element Feedback');
+        for(const [k,label] of FIELDS){ const fb=(r.toulmin_feedback[k]||'').trim(); if(fb) lines.push(`- **${label}**: ${fb}`); }
+      }
+    }
+    lines.push('');
+    lines.push('---');
+    lines.push('## JSON Data (optional)');
+    lines.push('```json');
+    lines.push(JSON.stringify({exported_at:now.toISOString(),user:state.user||null,topic,stance,persona,toulmin:t,history:state.history,last_result:state.lastResult}, null, 2));
+    lines.push('```');
+    const safeTopic = (topic||'debate').replace(/[\\/:*?"<>|]+/g,'_').slice(0,40) || 'debate';
+    downloadText(`ArgumentCraft-${safeTopic}-${fileStamp}.md`, lines.join('\n'), 'text/markdown;charset=utf-8');
+    if(statusEl) statusEl.textContent = 'Debate record exported as a Markdown file.';
+  }
+
+  const NODE_META = {
+    grounds:['#cfe3d7','#5f8f72','Evidence',ICONS.grounds], backing:['#d9e6f2','#6487a8','Support',ICONS.backing], warrant:['#f1dfc6','#b07a43','Reasoning',ICONS.warrant],
+    claim:['#ead7c3','#8a5a3b','Claim',ICONS.claim], qualifier:['#efe3cf','#9a844f','Scope',ICONS.qualifier], rebuttal:['#f0d9d3','#a4635a','Rebuttal',ICONS.rebuttal]
+  };
+  function svgNode(key, label, x, y, w, h, body, fbText, target, level){
+    const active = target===key, full = (body||'').trim(), has = !!full, fullFb = (fbText||'').trim();
+    const [bg,accent,tag,icon] = NODE_META[key] || ['#f6efe6','#8a5a3b','',''];
+    const cls = `t-node${active?' active':''}${has?' has-content':''}`;
+    const pulse = active ? `<rect class="pulse" x="${x-4}" y="${y-4}" width="${w+8}" height="${h+8}" rx="17" fill="${accent}" opacity=".18"/>` : '';
+    const ring = active ? `<rect class="ring" x="${x-2}" y="${y-2}" width="${w+4}" height="${h+4}" rx="15" fill="none" stroke="${accent}" opacity=".35"/>` : '';
+    const fix = active ? `<rect class="fixring" x="${x-6}" y="${y-6}" width="${w+12}" height="${h+12}" rx="19" fill="none" stroke="#c0503f" stroke-width="2" stroke-dasharray="6 5"/>` : '';
+    const badgeW = 34;
+    const bodyText = esc(shortText(full,26));
+    return `<g class="${cls}" data-key="${key}" data-label="${attr(label)}" data-full="${attr(full||'Not yet added')}" data-fb="${attr(fullFb)}" style="cursor:pointer">
+      <title>${esc(label)}: ${esc(full||'Not yet added')}${fullFb?'\nAI feedback: '+esc(fullFb):''}</title>
+      ${pulse}${ring}${fix}
+      <rect class="main" x="${x}" y="${y}" width="${w}" height="${h}" rx="14" fill="url(#g-${key})" stroke="${active?accent:'rgba(42,26,18,.14)'}"/>
+      <rect x="${x}" y="${y}" width="5" height="${h}" rx="14" fill="${accent}" opacity="${active?.95:.55}"/>
+      <rect x="${x+w-badgeW-8}" y="${y+7}" width="${badgeW}" height="14" rx="7" fill="${accent}" opacity=".88"/>
+      <text class="t-badge" x="${x+w-badgeW/2-8}" y="${y+17}" text-anchor="middle">${esc(tag)}</text>
+      <foreignObject x="${x+10}" y="${y+6}" width="${w-52}" height="18">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="font:700 10.5px 'Inter Tight',system-ui,sans-serif;color:${accent};letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:16px">${icon?`<span class="t-icon">${icon}</span>`:''}${esc(label)}</div>
+      </foreignObject>
+      <foreignObject x="${x+10}" y="${y+24}" width="${w-16}" height="${h-28}">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="font:500 11px 'Inter Tight',system-ui,sans-serif;color:#3b2a20;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;overflow-wrap:anywhere">${bodyText}</div>
+      </foreignObject>
+      ${has?`<circle cx="${x+w-11}" cy="${y+h-11}" r="4" fill="${accent}" opacity=".8"><animate attributeName="opacity" values=".35;.9;.35" dur="2.4s" repeatCount="indefinite"/></circle>`:''}
+    </g>`;
+  }
+  function link(x1,y1,x2,y2,active,accent){
+    const marker = active ? 'url(#arrowA)' : 'url(#arrow)';
+    return `<g>
+      <path class="t-link${active?'':''}" d="M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}" marker-end="${marker}"/>
+      ${active?`<path class="t-link active" d="M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}" stroke="${accent||'rgba(138,90,59,.62)'}" marker-end="url(#arrowA)"/>`:''}
+    </g>`;
+  }
+  function renderMap(result){
+    const t=getToulmin(), fb=(result&&result.toulmin_feedback)||{}, target=(result&&result.target_element)||'overall';
+    $('targetLabel').textContent=target;
+    const level=result?Number(result.conflict_level||0):0;
+    const faceEl=$('conflictFace'); if(faceEl) faceEl.innerHTML=thermometer(level);
+    $('conflictLabel').textContent=level?`${level} / 5`:'-';
+    $('conflictMeter').style.width=`${Math.max(0,Math.min(100,level*20))}%`;
+    for(const [k] of FIELDS){ const el=$(k); const lab=el&&el.closest('label'); if(lab) lab.classList.toggle('need-fix', k===target); }
+    const W=640,H=300,nw=132,nh=62;
+    const pos={grounds:[12,34],backing:[12,178],warrant:[160,106],claim:[316,106],qualifier:[474,24],rebuttal:[474,188]};
+    const active = k => target===k || (target==='overall' && level>0 && k==='claim');
+    const accent = (NODE_META[target]||[])[1] || '#8a5a3b';
+    const grads = Object.entries(NODE_META).map(([k,[bg]])=>`<linearGradient id="g-${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fffdf9"/><stop offset="100%" stop-color="${bg}" stop-opacity=".72"/></linearGradient>`).join('');
+    const svg = `
+      <svg class="toulmin-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Toulmin thinking map">
+        <defs>
+          ${grads}
+          <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="${accent}" flood-opacity=".22"/></filter>
+          <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="rgba(42,26,18,.22)"/></marker>
+          <marker id="arrowA" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="${accent}"/></marker>
+        </defs>
+        <g opacity=".55">
+          <ellipse cx="382" cy="137" rx="128" ry="88" fill="none" stroke="rgba(138,90,59,.08)" stroke-dasharray="4 6"/>
+          <ellipse cx="382" cy="137" rx="156" ry="114" fill="none" stroke="rgba(42,26,18,.05)" stroke-dasharray="3 7"/>
+        </g>
+        ${link(pos.grounds[0]+nw,pos.grounds[1]+nh/2,pos.warrant[0],pos.warrant[1]+nh/2,active('grounds')||active('warrant'),accent)}
+        ${link(pos.backing[0]+nw,pos.backing[1]+nh/2,pos.warrant[0],pos.warrant[1]+nh/2,active('backing')||active('warrant'),accent)}
+        ${link(pos.warrant[0]+nw,pos.warrant[1]+nh/2,pos.claim[0],pos.claim[1]+nh/2,active('warrant')||active('claim'),accent)}
+        ${link(pos.claim[0]+nw,pos.claim[1]+16,pos.qualifier[0],pos.qualifier[1]+nh/2,active('claim')||active('qualifier'),accent)}
+        ${link(pos.claim[0]+nw,pos.claim[1]+34,pos.rebuttal[0],pos.rebuttal[1]+nh/2,active('claim')||active('rebuttal'),accent)}
+        ${svgNode('grounds','Grounds',pos.grounds[0],pos.grounds[1],nw,nh,t.grounds,fb.grounds,target,level)}
+        ${svgNode('backing','Backing',pos.backing[0],pos.backing[1],nw,nh,t.backing,fb.backing,target,level)}
+        ${svgNode('warrant','Warrant',pos.warrant[0],pos.warrant[1],nw,nh,t.warrant,fb.warrant,target,level)}
+        ${svgNode('claim','Claim',pos.claim[0],pos.claim[1],nw,nh,t.claim,fb.claim,target,level)}
+        ${svgNode('qualifier','Qualifier',pos.qualifier[0],pos.qualifier[1],nw,nh,t.qualifier,fb.qualifier,target,level)}
+        ${svgNode('rebuttal','Rebuttal',pos.rebuttal[0],pos.rebuttal[1],nw,nh,t.rebuttal,fb.rebuttal,target,level)}
+      </svg>`;
+    const details = FIELDS.filter(([k])=>fb[k]).map(([k,label])=>{ const meta=NODE_META[k]||[]; const a=meta[1]||'#8a5a3b'; const ic=meta[3]||''; return `<div class="detail${target===k?' active':''}" style="${target===k?`border-color:${a}55`:''}"><div class="d-head" style="color:${a}">${ic?`<i class="ico" style="color:${a}">${ic}</i>`:''}${esc(label)} feedback</div><div class="d-fb">${esc(fb[k])}</div></div>`; }).join('');
+    $('toulminMap').innerHTML = svg + (details ? `<div class="detail-grid">${details}</div>` : '');
+    wireMapTooltip();
+    renderSteps();
+  }
+
+  const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4 10-10"/></svg>';
+  function currentStep(){
+    if(!state.lastResult) return 1;
+    return state.talking ? 3 : 2;
+  }
+  function guideTo(k){
+    const sel = k===1 ? '.col.left' : k===2 ? '.col.middle' : '.col.right';
+    const el = document.querySelector(sel); if(!el) return;
+    document.querySelectorAll('.col.guide').forEach(c=>{ c.classList.remove('guide'); const t=c.querySelector('.guide-tag'); if(t) t.remove(); });
+    const r = el.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    if(r.top < 0 || r.bottom > vh + 4){
+      try{ el.scrollIntoView({behavior:'smooth', block:'start'}); }catch(e){ el.scrollIntoView(); }
+    }
+    const tag = document.createElement('span');
+    tag.className = 'guide-tag';
+    tag.textContent = k===1 ? 'Start here' : k===2 ? 'Next: your map' : 'Next: talk to AI';
+    el.appendChild(tag);
+    el.classList.remove('guide'); void el.offsetWidth; el.classList.add('guide');
+    clearTimeout(guideTo._t);
+    guideTo._t = setTimeout(()=>{ el.classList.remove('guide'); tag.remove(); }, 4000);
+  }
+  let lastStepShown = null;
+  function renderSteps(){
+    const bar = $('stepsBar'); if(!bar) return;
+    const cur = currentStep();
+    bar.querySelectorAll('.step').forEach(el=>{
+      const k = Number(el.dataset.step), done = k < cur;
+      el.classList.toggle('done', done);
+      if(k===cur) el.setAttribute('aria-current','step'); else el.removeAttribute('aria-current');
+      const num = el.querySelector('.s-num');
+      if(num) num.innerHTML = done ? CHECK_SVG : String(k);
+    });
+    bar.querySelectorAll('.s-line').forEach((el,i)=>el.classList.toggle('done', i < cur-1));
+    if(lastStepShown !== null && cur !== lastStepShown){
+      const a = bar.querySelector('.step[aria-current="step"]');
+      if(a){ a.classList.remove('pop'); void a.offsetWidth; a.classList.add('pop'); setTimeout(()=>a.classList.remove('pop'), 1300); }
+    }
+    lastStepShown = cur;
+  }
+  function gotoStep(k){
+    if(k===1){ const el=$('topic'); if(el){ el.focus(); el.scrollIntoView({block:'nearest'}); } }
+    else if(k===2){ document.querySelector('.col.middle')?.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+    else { const el=$('learnerMessage'); if(el){ el.focus(); el.scrollIntoView({block:'nearest'}); } }
+  }
+  document.querySelectorAll('#stepsBar .step').forEach(el=>el.addEventListener('click',()=>gotoStep(Number(el.dataset.step))));
+  function announceFix(target, sug){
+    if(!sug) return;
+    showFixToast(target, sug);
+  }
+  function showFixToast(target, text){
+    const t=$('fixToast'); if(!t || !text) return;
+    const meta=NODE_META[target]||[];
+    const label=(FIELDS.find(([k])=>k===target)||[,'overall'])[1];
+    $('fixToastIcon').innerHTML = meta[3] || ICONS.warn;
+    $('fixToastTarget').textContent = label;
+    $('fixToastText').textContent = text;
+    t.hidden = true; void t.offsetWidth; t.hidden = false;
+    clearTimeout(showFixToast._t);
+    showFixToast._t = setTimeout(()=>{ t.hidden = true; }, 9000);
+  }
+  $('fixToast')?.addEventListener('click',(e)=>{
+    const t=$('fixToast'); if(!t) return;
+    t.hidden=true;
+  });
+
+  function wireMapTooltip(){
+    const wrap = $('toulminMap')?.closest('.map-wrap') || $('toulminMap')?.parentElement;
+    const tip = $('mapTooltip');
+    const root = $('toulminMap');
+    if(!wrap || !tip || !root) return;
+    const show = (node, evt)=>{
+      const label = node.getAttribute('data-label') || node.getAttribute('data-key') || '';
+      const full = node.getAttribute('data-full') || 'Not yet added';
+      const fb = node.getAttribute('data-fb') || '';
+      tip.innerHTML = `<div class="tt-title">${esc(label)}</div><div class="tt-body">${esc(full)}</div>${fb?`<div class="tt-fb">${esc(fb)}</div>`:''}`;
+      tip.classList.add('show');
+      tip.setAttribute('aria-hidden','false');
+      place(evt);
+    };
+    const hide = ()=>{ tip.classList.remove('show'); tip.setAttribute('aria-hidden','true'); };
+    const place = (evt)=>{
+      if(!evt) return;
+      const r = wrap.getBoundingClientRect();
+      const pad = 8;
+      let x = evt.clientX - r.left + 12;
+      let y = evt.clientY - r.top + 12;
+      tip.style.left = x + 'px';
+      tip.style.top = y + 'px';
+      const tr = tip.getBoundingClientRect();
+      if(tr.right > r.right - pad) x = Math.max(pad, evt.clientX - r.left - tr.width - 12);
+      if(tr.bottom > r.bottom - pad) y = Math.max(pad, evt.clientY - r.top - tr.height - 12);
+      tip.style.left = Math.max(pad, Math.min(x, r.width - tr.width - pad)) + 'px';
+      tip.style.top = Math.max(pad, Math.min(y, r.height - tr.height - pad)) + 'px';
+    };
+    root.querySelectorAll('.t-node').forEach(node=>{
+      node.addEventListener('mouseenter', (e)=>show(node,e));
+      node.addEventListener('mousemove', (e)=>place(e));
+      node.addEventListener('mouseleave', hide);
+    });
+    root.addEventListener('mouseleave', hide);
+  }
+  async function callDebate(learnerMessage){
+    const topic=$('topic').value.trim(), claim=$('claim').value.trim();
+    if(!topic||!claim){ statusEl.textContent='Please add a topic and a Claim first.'; return; }
+    setBusy(true); statusEl.textContent='Your AI buddy is thinking...';
+    const stepBefore = currentStep();
+    try{
+      const res=await fetch('/api/debate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic,stance:$('stance').value.trim(),toulmin:getToulmin(),history:state.history,learner_message:learnerMessage||'',persona:$('personaSelect').value||'socratic',...settingsPayload()})});
+      const data=await res.json(); if(!res.ok) throw new Error(data.detail||'Request failed');
+      const questions=Array.isArray(data.socratic_questions)?data.socratic_questions:[];
+      const aiText=questions.map((q,i)=>`${questions.length>1?`${i+1}. `:''}${q}`).join('\n');
+      addMessage('assistant',aiText||data.challenge_summary||'Please continue refining your argument.');
+      state.history.push({role:'assistant',content:aiText}); state.lastResult=data; renderMap(data);
+      const stepAfter = currentStep();
+      if(stepAfter > stepBefore) guideTo(stepAfter);
+      announceFix(data.target_element, data.suggested_revision);
+      statusEl.textContent=`Round ${Math.ceil(state.history.length/2)} done.`;
+      if(state.user){ try{ await api('/api/sessions',{method:'POST',body:JSON.stringify({assignment_id:(state.assignmentApplied?state.assignment?.id:null)||null,topic:$('topic').value.trim(),stance:$('stance').value.trim(),persona:$('personaSelect').value||'socratic',toulmin:getToulmin(),history:state.history,result:data})}); }catch(e){} }
+    }catch(err){
+      statusEl.textContent=`Error: ${err.message}`;
+      addMessage('assistant',`Oops: ${err.message}\nCheck your API settings and make sure the backend is running.`);
+    }finally{ setBusy(false); }
+  }
+  function setBusy(b){ $('startBtn').disabled=b; $('replyForm').querySelector('button[type="submit"]').disabled=b; }
+  $('settingsBtn').addEventListener('click',()=>settingsDialog.showModal());
+  $('cancelSettings').addEventListener('click',()=>settingsDialog.close());
+  $('saveSettings').addEventListener('click',(e)=>{ e.preventDefault(); saveSettings(); settingsDialog.close(); statusEl.textContent='API settings saved.'; });
+  $('startBtn').addEventListener('click',async()=>{ if(!state.history.length){ addMessage('user','Start the first Socratic round based on my Toulmin argument map.'); state.history.push({role:'user',content:'Please start the first round of Socratic questions.'});} await callDebate(''); guideTo(currentStep()); });
+  $('replyForm').addEventListener('submit',async(e)=>{ e.preventDefault(); const msg=$('learnerMessage').value.trim(); if(!msg) return; state.talking=true; addMessage('user',msg); state.history.push({role:'user',content:msg}); $('learnerMessage').value=''; await callDebate(msg); });
+  $('exportBtn')?.addEventListener('click',exportDebate);
+  $('resetBtn').addEventListener('click',()=>{ state.assignmentApplied=false; state.history=[]; state.lastResult=null; state.talking=false; dialogueEl.innerHTML=''; $('learnerMessage').value=''; $('topic').value=''; $('stance').value=''; for(const [k] of FIELDS) $(k).value=''; renderMap(null); guideTo(1); statusEl.textContent='Cleared. Pick a demo or write a new argument.'; });
+  const DEMOS = {
+    warrant: {
+      label: 'Weak Warrant',
+      topic: 'Should middle schools require students to complete daily paper-based reading assignments?',
+      stance: 'Yes, because it may help improve focus.',
+      toulmin: {
+        claim: 'Middle schools should require students to complete daily paper-based reading assignments.',
+        grounds: 'Many teachers report that students struggle to focus in class and are frequently distracted by phones.',
+        warrant: 'If students are less focused, then paper-based reading assignments will improve their concentration.',
+        backing: 'Reading is generally considered helpful for learning.',
+        qualifier: 'In most cases.',
+        rebuttal: 'Some students may not enjoy paper-based reading.'
+      },
+      history: [
+        {role:'user', content:'Start the first Socratic round based on my Toulmin argument map.'},
+        {role:'assistant', content:'1. Your Grounds mention distraction and phones, but your Warrant jumps directly to the claim that paper-based reading assignments will improve focus. What assumptions connect those points?\n2. Could paper-based assignments increase workload without improving classroom attention? Under what conditions would that reasoning fail?\n3. Your Backing is quite general ("reading is helpful"). Can you provide more specific evidence for paper-based reading assignments, rather than reading in general?'}
+      ],
+      result: {
+        socratic_questions: [
+          'Your Grounds mention distraction and phones, but your Warrant jumps directly to the claim that paper-based reading assignments will improve focus. What assumptions connect those points?',
+          'Could paper-based assignments increase workload without improving classroom attention? Under what conditions would that reasoning fail?',
+          'Your Backing is quite general ("reading is helpful"). Can you provide more specific evidence for paper-based reading assignments, rather than reading in general?'
+        ],
+        target_element: 'warrant',
+        conflict_level: 4,
+        suggested_revision: 'Unpack the Warrant: explain how phone distraction affects attention, what mechanism makes paper-based reading reduce that distraction, and add research or classroom evidence as Backing.',
+        toulmin_feedback: {
+          claim: 'The claim is clear, but it could specify grade level, subject, or assignment length.',
+          grounds: 'The observation is plausible, but the evidence is general; add data or concrete examples.',
+          warrant: 'The reasoning leap is significant; explain the mechanism that makes the intervention effective.',
+          backing: 'The support is too broad; use more specific research or evidence.',
+          qualifier: 'The qualifier is weak; clarify when the claim applies.',
+          rebuttal: 'There is some awareness of counterarguments, but no response to them yet.'
+        }
+      }
+    },
+    grounds: {
+      label: 'Insufficient Evidence',
+      topic: 'Should schools ban students from using generative AI on campus?',
+      stance: 'Yes, they should ban it.',
+      toulmin: {
+        claim: 'Schools should ban students from using generative AI on campus.',
+        grounds: 'Many people feel that AI makes students lazy and may harm learning.',
+        warrant: 'If a tool may create dependence and harm learning, schools should ban it.',
+        backing: 'Schools have a responsibility to protect learning quality.',
+        qualifier: 'In on-campus learning contexts.',
+        rebuttal: 'In a few cases, AI might also support learning.'
+      },
+      history: [
+        {role:'user', content:'Start the first Socratic round based on my Toulmin argument map.'},
+        {role:'assistant', content:'1. Your Grounds rely on phrases like "many people feel" and "may harm learning." What specific observations, surveys, studies, or cases could serve as verifiable evidence?\n2. How would you distinguish causal evidence that AI makes students lazy from mere correlation? Is there evidence that guided AI use does not necessarily create dependence?\n3. If the evidence is weak, could a ban create other problems (hidden use, missed AI literacy education)? What evidence would support a ban rather than regulated use?'}
+      ],
+      result: {
+        socratic_questions: [
+          'Your Grounds rely on phrases like "many people feel" and "may harm learning." What specific observations, surveys, studies, or cases could serve as verifiable evidence?',
+          'How would you distinguish causal evidence that AI makes students lazy from mere correlation? Is there evidence that guided AI use does not necessarily create dependence?',
+          'If the evidence is weak, could a ban create other problems (hidden use, missed AI literacy education)? What evidence would support a ban rather than regulated use?'
+        ],
+        target_element: 'grounds',
+        conflict_level: 4,
+        suggested_revision: 'Replace the Grounds with specific evidence: classroom observations, assignment changes, school survey data, or research findings, and explain the source and scope.',
+        toulmin_feedback: {
+          claim: 'The position is clear, but the strong conclusion needs stronger evidence.',
+          grounds: 'The evidence is mostly subjective; add verifiable data, cases, or research.',
+          warrant: 'The reasoning form is usable, but its premise is not well supported.',
+          backing: 'The direction is reasonable; clarify the limits of school responsibility.',
+          qualifier: 'The context is specified, but it could be more precise.',
+          rebuttal: 'An exception is mentioned, but it does not yet affect the argument.'
+        }
+      }
+    },
+    rebuttal: {
+      label: 'Missing Rebuttal',
+      topic: 'Should universities allow students to use AI to generate first drafts of assignments?',
+      stance: 'Yes, because it can improve efficiency.',
+      toulmin: {
+        claim: 'Universities should allow students to use AI to generate first drafts of assignments.',
+        grounds: 'AI can quickly produce text frameworks and help students save time.',
+        warrant: 'If a tool improves writing efficiency, universities should allow students to use it in assignments.',
+        backing: 'Higher education should also help students use digital tools effectively.',
+        qualifier: 'In most course assignments.',
+        rebuttal: ''
+      },
+      history: [
+        {role:'user', content:'Start the first Socratic round based on my Toulmin argument map.'},
+        {role:'assistant', content:'1. Your argument has almost no Rebuttal. What are the strongest opposing objections (academic integrity, originality, bypassed learning goals)? Would your claim still hold in those cases?\n2. How would you distinguish "generating a first draft" from "submitting AI-generated content"? If students submit work without revision, does your Qualifier still protect the claim?\n3. Does efficiency equal better learning? Do you need conditions for AI use to address the counterexample that efficiency may reduce deep learning?'}
+      ],
+      result: {
+        socratic_questions: [
+          'Your argument has almost no Rebuttal. What are the strongest opposing objections (academic integrity, originality, bypassed learning goals)? Would your claim still hold in those cases?',
+          'How would you distinguish "generating a first draft" from "submitting AI-generated content"? If students submit work without revision, does your Qualifier still protect the claim?',
+          'Does efficiency equal better learning? Do you need conditions for AI use to address the counterexample that efficiency may reduce deep learning?'
+        ],
+        target_element: 'rebuttal',
+        conflict_level: 3,
+        suggested_revision: 'Add a Rebuttal: specify when AI use should not be allowed (e.g., tasks assessing original thinking) and include rules such as disclosure, revision, and process evidence.',
+        toulmin_feedback: {
+          claim: 'The claim is appealing but currently too broad.',
+          grounds: 'The efficiency benefit is noted, but the evidence could be more specific.',
+          warrant: '"More efficient, therefore allowed" is too direct; consider educational purposes.',
+          backing: 'There is value here, but it must be balanced with academic norms.',
+          qualifier: 'A qualifier exists, but it does not address key counterexamples.',
+          rebuttal: 'This is largely missing; address conflicts with integrity and learning goals.'
+        }
+      }
+    }
+  };
+
+  function loadDemo(key, showStatus=true){
+    state.assignmentApplied=false;
+    const d = DEMOS[key]; if(!d) return;
+    $('topic').value=d.topic; $('stance').value=d.stance;
+    for(const [k] of FIELDS) $(k).value=d.toulmin[k]||'';
+    dialogueEl.innerHTML='';
+    addMessage('user','Start the first Socratic round based on my Toulmin argument map.');
+    addMessage('assistant', d.result.socratic_questions.map((q,i)=>`${i+1}. ${q}`).join('\n'));
+    state.history = d.history.map(x=>({...x}));
+    state.lastResult = JSON.parse(JSON.stringify(d.result));
+    state.talking = false;
+    renderMap(state.lastResult);
+    if(showStatus){ statusEl.textContent=''; guideTo(currentStep()); announceFix(state.lastResult.target_element, state.lastResult.suggested_revision); }
+  }
+  document.querySelectorAll('[data-demo]').forEach(btn=>btn.addEventListener('click',()=>loadDemo(btn.dataset.demo,true)));
+  $('personaSelect').addEventListener('change',()=>{ localStorage.setItem('ac_persona', $('personaSelect').value); statusEl.textContent='New buddy: ' + ($('personaSelect').selectedOptions[0]?.text || $('personaSelect').value); });
+  function showApp(role){
+    $('studentApp').style.display = role==='teacher' ? 'none' : 'grid';
+    $('teacherApp').style.display = role==='teacher' ? 'block' : 'none';
+  }
+  function setUser(user){
+    state.user = user;
+    $('userBadge').textContent = user ? `${user.display_name || user.username} · ${user.role==='teacher'?'Teacher':'Student'}` : '';
+    $('loginBtn').style.display = user ? 'none' : '';
+    $('logoutBtn').style.display = user ? '' : 'none';
+    $('personaSelect').style.display = user?.role==='teacher' ? 'none' : '';
+    $('resetBtn').style.display = user?.role==='teacher' ? 'none' : '';
+    showApp(user?.role);
+  }
+  function barRows(items, maxVal){
+    if(!items.length) return '<div class="empty-note">No data yet</div>';
+    return items.map(([label,val])=>`<div class="bar-row"><div class="bar-label">${esc(label)}</div><div class="bar-track"><div class="bar-fill" style="width:${maxVal?Math.round(val/maxVal*100):0}%"></div></div><div class="bar-val">${val}</div></div>`).join('');
+  }
+  function histogram(conflicts){
+    const max = Math.max(1, ...conflicts.map(x=>x[1]));
+    const cols = [1,2,3,4,5].map(n=>{ const v=(conflicts.find(x=>String(x[0])===`Level ${n}`)||[0,0])[1]; return {n,v}; });
+    return `<div class="hist">${cols.map(c=>`<div class="hist-col"><div class="hist-bar-wrap"><div class="hist-bar" style="height:${Math.round(c.v/max*100)}%"></div></div><div class="hist-v">${c.v}</div><div class="hist-x">L${c.n}</div></div>`).join('')}</div><div class="legend"><span><i class="dot" style="background:#5f8f72"></i>1–2 easy</span><span><i class="dot" style="background:#c0503f"></i>4–5 strong</span></div>`;
+  }
+  function donutChart(items){
+    if(!items.length) return '<div class="empty-note">No data yet</div>';
+    const colors = {claim:'#8a5a3b',grounds:'#5f8f72',warrant:'#b07a43',backing:'#6487a8',qualifier:'#9a844f',rebuttal:'#a4635a',overall:'#8a7a6e'};
+    const total = items.reduce((a,[_k,v])=>a+v,0) || 1;
+    const cx=90, cy=80, r=54, inner=30;
+    let a0 = -Math.PI/2, paths='';
+    items.forEach(([k,v])=>{
+      const a1 = a0 + (v/total)*Math.PI*2;
+      const large = (a1-a0) > Math.PI ? 1 : 0;
+      const p = (ang,rad)=>[cx+Math.cos(ang)*rad, cy+Math.sin(ang)*rad];
+      const [x0,y0]=p(a0,r),[x1,y1]=p(a1,r),[x2,y2]=p(a1,inner),[x3,y3]=p(a0,inner);
+      const d = `M ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1} L ${x2} ${y2} A ${inner} ${inner} 0 ${large} 0 ${x3} ${y3} Z`;
+      paths += `<path d="${d}" fill="${colors[k]||'#bca58f'}" stroke="rgba(255,253,249,.9)" stroke-width="2"><title>${esc(k)}: ${v}</title></path>`;
+      a0 = a1;
+    });
+    const legend = items.map(([k,v])=>`<span><i style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${colors[k]||'#bca58f'};margin-right:6px;vertical-align:middle"></i>${esc(k)} ${v}</span>`).join('');
+    return `<div style="display:grid;grid-template-columns:180px 1fr;gap:10px;align-items:center"><svg viewBox="0 0 180 160" style="width:100%;max-width:180px;height:auto;display:block"><g>${paths}</g><circle cx="${cx}" cy="${cy}" r="${inner-1}" fill="rgba(255,253,249,.82)"/><text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="11" fill="#8a7a6e">Total</text><text x="${cx}" y="${cy+14}" text-anchor="middle" font-size="18" font-weight="500" fill="#3b2116">${total}</text></svg><div class="legend" style="margin:0">${legend}</div></div>`;
+  }
+
+  function summarizeSessions(sessions){
+    const byUser={}, byFocus={}, byConflict={1:0,2:0,3:0,4:0,5:0};
+    sessions.forEach(s=>{
+      const name=s.display_name||s.username||'Student'; byUser[name]=(byUser[name]||0)+1;
+      const r=s.result||{}; const f=r.target_element||'overall'; byFocus[f]=(byFocus[f]||0)+1;
+      const c=Math.max(1,Math.min(5,Number(r.conflict_level||0)||0)); if(c) byConflict[c]++;
+    });
+    const focusOrder=['claim','grounds','warrant','backing','qualifier','rebuttal','overall'];
+    return {
+      byUser, byFocus, byConflict,
+      users:Object.entries(byUser).sort((a,b)=>b[1]-a[1]).slice(0,8),
+      focus:focusOrder.filter(k=>byFocus[k]).map(k=>[k,byFocus[k]]),
+      conflicts:Object.entries(byConflict).map(([k,v])=>[`Level ${k}`,v]),
+      avg:sessions.length?(sessions.reduce((a,s)=>a+(Number((s.result||{}).conflict_level)||0),0)/sessions.length).toFixed(1):'-',
+      topFocus:Object.entries(byFocus).sort((a,b)=>b[1]-a[1])[0]?.[0]||'-'
+    };
+  }
+  function renderStatsCards(targetId, sessions, label){
+    const m=summarizeSessions(sessions);
+    $(targetId).innerHTML = `
+      <div class="stat-card"><span>Students</span><b>${Object.keys(m.byUser).length}</b><small>${esc(label)}</small></div>
+      <div class="stat-card"><span>Records</span><b>${sessions.length}</b><small>Saved rounds</small></div>
+      <div class="stat-card"><span>Avg. Conflict</span><b>${m.avg}</b><small>Levels 1–5</small></div>
+      <div class="stat-card"><span>Top Focus</span><b style="font-size:20px;margin-top:8px;overflow-wrap:anywhere">${esc(m.topFocus)}</b><small>Toulmin element</small></div>`;
+  }
+  function fmtLocalTime(iso){
+    if(!iso) return '';
+    const d = new Date(iso);
+    if(Number.isNaN(d.getTime())) return String(iso).slice(0,16).replace('T',' ');
+    const p=n=>String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  function renderRecent(targetId, sessions, emptyText){
+    $(targetId).innerHTML = sessions.length ? sessions.slice(0,3).map(s=>{ const r=s.result||{}; return `<div class="recent-item"><div class="m">${esc(s.display_name||s.username)} · ${esc(fmtLocalTime(s.updated_at))}</div><div class="t">${esc(s.topic||'(No topic)')} ${s.assignment_title?`<span style="color:#8a7a6e">· ${esc(s.assignment_title)}</span>`:''}</div><div class="m">Focus ${esc(r.target_element||'overall')} · Conflict ${esc(String(r.conflict_level||'-'))}</div></div>`; }).join('') : `<div class="empty-note">${esc(emptyText)}</div>`;
+  }
+  function renderTeacherCharts(assignmentSessions, selfSessions){
+    const am=summarizeSessions(assignmentSessions), sm=summarizeSessions(selfSessions);
+    renderStatsCards('statsCards', assignmentSessions, 'This prompt');
+    $('chartStudents').innerHTML = barRows(am.users, Math.max(1,...am.users.map(x=>x[1]),1));
+    $('chartFocus').innerHTML = donutChart(am.focus);
+    $('chartConflict').innerHTML = histogram(am.conflicts);
+    renderRecent('recentList', assignmentSessions, 'No student records for this published prompt yet.');
+    renderStatsCards('selfStatsCards', selfSessions, 'Self-directed practice');
+    $('chartSelfStudents').innerHTML = barRows(sm.users, Math.max(1,...sm.users.map(x=>x[1]),1));
+    $('chartSelfFocus').innerHTML = donutChart(sm.focus);
+    $('chartSelfConflict').innerHTML = histogram(sm.conflicts);
+    renderRecent('selfRecentList', selfSessions, 'No self-directed practice records yet.');
+  }
+  function applyTeacherFilter(){
+    const sessions = state.teacherSessions || [];
+    const val = $('assignmentFilter')?.value || 'active';
+    let assignmentSessions = [];
+    if(val === 'active'){
+      assignmentSessions = sessions.filter(s=>s.assignment_id!=null && (state.assignment ? s.assignment_id==state.assignment.id : true));
+    } else if(val === 'all_assigned'){
+      assignmentSessions = sessions.filter(s=>s.assignment_id!=null);
+    } else if(val.startsWith('id:')){
+      const id = Number(val.slice(3));
+      assignmentSessions = sessions.filter(s=>Number(s.assignment_id)===id);
+    } else {
+      assignmentSessions = sessions.filter(s=>s.assignment_id!=null);
+    }
+    const selfSessions = sessions.filter(s=>s.assignment_id==null);
+    renderTeacherCharts(assignmentSessions, selfSessions);
+  }
+  async function loadTeacherDashboard(){
+    try{
+      const [a, allA, sres] = await Promise.all([
+        api('/api/assignments/active',{method:'GET'}),
+        api('/api/assignments',{method:'GET'}),
+        api('/api/teacher/sessions',{method:'GET'})
+      ]);
+      state.assignment = a.assignment;
+      state.teacherSessions = sres.sessions || [];
+      $('activeAssignmentBox').innerHTML = a.assignment ? `<strong>Current Shared Prompt: </strong>${esc(a.assignment.title)}<br>${esc(a.assignment.topic)}${a.assignment.stance?`<br><small>Notes: ${esc(a.assignment.stance)}</small>`:''}` : '<strong>No shared prompt is active.</strong><br>After publishing, students can see and use it when they sign in.';
+      const sel = $('assignmentFilter');
+      if(sel){
+        const opts = [`<option value="all_assigned">All Published Prompts</option>`,`<option value="active">Current Active Prompt</option>`]
+          .concat((allA.assignments||[]).map(x=>`<option value="id:${x.id}">${esc(x.title)}${x.active?' (Current)':''}</option>`));
+        const prev = sel.value;
+        sel.innerHTML = opts.join('');
+        if(prev && [...sel.options].some(o=>o.value===prev)) sel.value=prev;
+        else sel.value='all_assigned';
+        sel.onchange = applyTeacherFilter;
+      }
+      const rb = $('refreshTeacherData'); if(rb) rb.onclick = loadTeacherDashboard;
+      applyTeacherFilter();
+    }catch(e){ $('teacherStatus').textContent = e.message; renderTeacherCharts([], (state.teacherSessions||[]).filter(s=>s.assignment_id==null)); }
+  }
+  async function loadActiveAssignment(){
+    try{
+      const d = await api('/api/assignments/active', {method:'GET', headers:{'Content-Type':'application/json'}});
+      state.assignment = d.assignment;
+      const b = $('assignmentBanner');
+      if(d.assignment){
+        b.style.display='block';
+        b.innerHTML = `<button type="button" class="assignment-dismiss" id="dismissAssignment" aria-label="Dismiss prompt notice">×</button><strong>Today's Question: ${esc(d.assignment.title)}</strong><div>${esc(d.assignment.topic)}</div>${d.assignment.stance?`<div>Hint: ${esc(d.assignment.stance)}</div>`:''}<button type="button" class="pill" id="applyAssignment">Use This Question</button>`;
+        $('dismissAssignment').onclick = ()=>{ b.style.display='none'; b.innerHTML=''; state.assignment=null; statusEl.textContent='Closed.'; };
+        $('applyAssignment').onclick = ()=>{
+          state.assignmentApplied = true;
+          state.history=[]; state.lastResult=null; state.talking=false; dialogueEl.innerHTML=''; $('learnerMessage').value='';
+          $('topic').value=d.assignment.topic||''; $('stance').value=d.assignment.stance||'';
+          for(const [k] of FIELDS) $(k).value='';
+          renderMap(null); statusEl.textContent='Loaded the class question.';
+          b.style.display='none'; b.innerHTML='';
+        };
+      } else { b.style.display='none'; b.innerHTML=''; }
+    }catch(e){}
+  }
+  function goLogin(){ window.location.href = '/'; }
+  async function refreshMe(){
+    if(!state.token){ setUser(null); goLogin(); return; }
+    try{
+      const d = await api('/api/auth/me', {method:'GET'});
+      if(d.user){
+        setUser(d.user);
+        if(d.user.role==='teacher') await loadTeacherDashboard();
+        else await loadActiveAssignment();
+      } else { localStorage.removeItem('ac_token'); state.token=''; setUser(null); goLogin(); }
+    } catch(e){ localStorage.removeItem('ac_token'); state.token=''; setUser(null); goLogin(); }
+  }
+  $('loginForm').addEventListener('submit', (e)=>{ e.preventDefault(); goLogin(); });
+  $('fillTeacher').onclick=()=>{ goLogin(); };
+  $('fillStudent').onclick=()=>{ goLogin(); };
+  $('loginBtn').addEventListener('click',()=>{ goLogin(); });
+  $('logoutBtn').addEventListener('click', async ()=>{ try{ await api('/api/auth/logout',{method:'POST'}); }catch(e){} localStorage.removeItem('ac_token'); state.token=''; state.user=null; state.assignment=null; $('assignmentBanner').style.display='none'; setUser(null); goLogin(); });
+  $('publishAssignment').addEventListener('click', async ()=>{
+    $('teacherStatus').textContent='';
+    try{
+      await api('/api/assignments',{method:'POST',body:JSON.stringify({title:$('assignTitle').value,topic:$('assignTopic').value,stance:$('assignStance').value,description:$('assignDesc').value,active:true})});
+      $('teacherStatus').textContent='Shared prompt published. Students will see it after signing in.';
+      $('assignTitle').value=''; $('assignTopic').value=''; $('assignStance').value=''; $('assignDesc').value='';
+      await loadTeacherDashboard();
+    }catch(e){ $('teacherStatus').textContent=e.message; }
+  });
+
+  $('personaSelect').addEventListener('change',()=>{ localStorage.setItem('ac_persona', $('personaSelect').value); statusEl.textContent='New buddy: ' + ($('personaSelect').selectedOptions[0]?.text || $('personaSelect').value); });
+  for(const [k] of FIELDS) $(k).addEventListener('input',()=>renderMap(state.lastResult));
+  $('learnerMessage').addEventListener('focus',()=>{
+    if(!state.lastResult || state.talking) return;
+    const before = currentStep();
+    state.talking = true;
+    renderSteps();
+    if(currentStep() > before) guideTo(3);
+  });
+  loadSettings();
+  injectIcons();
+  loadDemo("warrant", false);
+  setUser(null);
+  refreshMe();
+})();
+  </script>
+</body>
+</html>
