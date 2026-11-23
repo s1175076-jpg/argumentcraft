@@ -1,3 +1,13 @@
+---
+title: ArgumentCraft
+emoji: 🧠
+colorFrom: yellow
+colorTo: orange
+sdk: docker
+pinned: false
+app_port: 7860
+---
+
 # ArgumentCraft · Argumentation & Debate Platform (MVP)
 
 ArgumentCraft is an AI-in-Education prototype for argument practice. It combines the **Toulmin model** with an AI debate partner that uses **multi-turn Socratic questioning** to create cognitive conflict, and provides **thinking visualization** to help learners examine and revise their arguments.
